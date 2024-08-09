@@ -1,0 +1,87 @@
+#### 1. Required input parameters
+# Input raw video
+raw_video_path=/NAS5/speech/data/virtual_being/data/paii/yuxinlu698/test-003/raw/VID20240719162415.mp4
+#### user name associated with the body / head model
+user_id=yuxinlu698
+#### model_id associated with the body / head model
+model_id=010
+#### affiliation of the user
+affi=paii
+# Output directory
+save_root=./outputs_model-${affi}-${user_id}-${model_id}
+
+#### 2. Optional parameters
+#### Path to the reference body appearance. If not given, 1st frame from the video will be selected
+body_prompt_img_pth=
+#### Path to the reference head appearance If not given, 1st frame from the video will be selected
+head_prompt_img_pth=
+#### SHOW pose mesh directory. Leave it empty if stage = -1 (i.e. run end2end pipeline)
+body_input_dir=
+### parameters for body model
+body_cfg=7.5
+body_condition_scale=2.
+### parameters for head model
+head_cfg=3.5
+head_condition_scale=1.
+### SHOW clip max length (# frames)
+max_frames=3600
+### SHOW parameter: use expression from ref or test one
+use_ref_expression=0
+### SHOW parameter: use global orient from ref or test one
+use_new_orient=0
+
+###############################################################
+# ALL other parameters with default values. Can be left unchanged
+###############################################################
+
+#### model root directory
+model_root=/NAS5/speech/data/virtual_being/models/paii_mya
+#### data root directory
+data_root=/NAS5/speech/data/virtual_being/data
+
+#### video id
+video_id=$(basename $raw_video_path)
+video_id=${video_id%.*}
+### default data paths
+#### ALL pose mesh, image, and aligned image data are stored here.
+mesh_image_dir=$save_root/$video_id
+
+#### SHOW parameters
+SHOW_PATH=../tools/paii_virtual_being_3d/third_party/SHOW
+show_config_name=show_config_${video_id}.sh
+clip_list_fn=clip_list_$video_id
+show_output_name=outputs_pose_model-${affi}-${user_id}-${model_id}
+
+#### output data
+body_save_dir=$save_root/$video_id/body_output
+body_headcrop_root=${body_save_dir}_meshcrop
+head_dir=${body_headcrop_root}/raw_aligned
+head_mask_dir=${body_headcrop_root}/raw_aligned_mask
+head_input_dir=${body_headcrop_root}/aligned
+head_matrix_dir=${body_headcrop_root}/matrix
+head_save_dir=${body_headcrop_root}/face_output
+final_save_dir=$save_root/$video_id/final_output
+
+#### output SHOW pose mesh directory (assume we only take the mesh of 1st video clip)
+if [[ -z $body_input_dir ]]; then
+  body_input_dir=$mesh_image_dir/mesh
+fi
+#### Update reference body / head appearance if not provided
+if [[ -z $body_prompt_img_pth ]]; then
+  body_prompt_img_pth=$model_root/$affi/$user_id/$model_id/prompt_img/body.png
+fi
+if [[ -z $head_prompt_img_pth ]]; then
+  head_prompt_img_pth=$model_root/$affi/$user_id/$model_id/prompt_img/head.png
+fi
+
+## 2) Model section
+### default model paths
+#### Body model ckpt
+body_weight_dir=$model_root/$affi/$user_id/$model_id/body
+#### Head model ckpt
+head_weight_dir=$model_root/$affi/$user_id/$model_id/head
+
+body_unet_path=${body_weight_dir}/unet
+body_controlent_path=${body_weight_dir}/controlnet
+head_unet_pth=${head_weight_dir}/unet
+head_controlnet_path=${head_weight_dir}/controlnet
